@@ -82,7 +82,7 @@ export function NewTicketModal({ role, types, projects, clients, features, onClo
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="new-ticket-title">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-scrim/40 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="new-ticket-title">
       <form
         onSubmit={submit}
         className="animate-rise scroll-quiet max-h-[94dvh] w-full overflow-y-auto rounded-t-3xl bg-card shadow-2xl sm:max-w-[640px] sm:rounded-3xl"
@@ -191,7 +191,7 @@ export function NewTicketModal({ role, types, projects, clients, features, onClo
           )}
 
           {error && (
-            <p role="alert" className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-danger">
+            <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
               {error}
             </p>
           )}

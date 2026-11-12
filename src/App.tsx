@@ -32,7 +32,7 @@ export default function App() {
 
   if (checking) {
     return (
-      <div className="grid min-h-screen place-items-center bg-night">
+      <div className="grid min-h-screen place-items-center bg-paper">
         <span className="h-3 w-3 animate-pulse rounded-full bg-accent-fill" aria-label="Loading" />
       </div>
     );

@@ -11,6 +11,7 @@ import { Eyebrow, Wordmark } from './Brand';
 import { TicketCard } from './TicketCard';
 import { TicketDrawer } from './TicketDrawer';
 import { NewTicketModal } from './NewTicketModal';
+import { ThemeRoot, ThemeToggle } from '../theme';
 
 interface Props {
   session: Session;
@@ -239,6 +240,7 @@ export function Board({ session, onSignOut }: Props) {
   const filterSelect = 'field select-chevron h-11 w-auto min-w-0 text-sm';
 
   return (
+    <ThemeRoot surface="app">
     <div className="flex min-h-screen flex-col bg-paper">
       <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6">
@@ -250,6 +252,7 @@ export function Board({ session, onSignOut }: Props) {
           </div>
           <div className="flex min-w-0 items-center gap-3">
             <span className="hidden max-w-[260px] truncate text-sm text-muted md:inline">{user.email || user.name}</span>
+            <ThemeToggle />
             <button type="button" onClick={onSignOut} className="btn-quiet h-9 px-3.5 text-sm">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sign out</span>
@@ -326,7 +329,7 @@ export function Board({ session, onSignOut }: Props) {
         </div>
 
         {error && (
-          <div role="alert" className="mt-4 flex items-start justify-between gap-4 rounded-xl border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-danger">
+          <div role="alert" className="mt-4 flex items-start justify-between gap-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
             <span>{error}</span>
             <button type="button" onClick={() => setError('')} className="shrink-0 font-medium underline-offset-2 hover:underline">
               Dismiss
@@ -450,5 +453,6 @@ export function Board({ session, onSignOut }: Props) {
         />
       )}
     </div>
+    </ThemeRoot>
   );
 }

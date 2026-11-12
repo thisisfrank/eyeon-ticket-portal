@@ -115,7 +115,7 @@ export function PendingFiles({ files, onRemove }: { files: PendingFile[]; onRemo
           <button
             type="button"
             onClick={() => onRemove(file.id)}
-            className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full bg-ink text-white shadow transition hover:bg-danger"
+            className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full bg-ink text-paper shadow transition hover:bg-danger"
             aria-label={`Remove ${file.filename}`}
           >
             <X className="h-3.5 w-3.5" />

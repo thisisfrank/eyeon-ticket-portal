@@ -3,6 +3,41 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --paper: 244 244 242;
+    --card: 255 255 255;
+    --column: 235 235 231;
+    --line: 227 227 223;
+    --line-strong: 205 205 199;
+    --ink: 17 17 17;
+    --body: 61 61 58;
+    --muted: 110 110 105;
+    --faint: 155 155 149;
+    --accent: 63 125 46;
+    --accent-fill: 90 163 68;
+    --accent-hover: 78 147 57;
+    --accent-soft: 237 245 232;
+    --accent-ink: 15 31 10;
+    --danger: 194 65 12;
+    --scrim: 17 17 17;
+    color-scheme: light;
+  }
+  html.dark {
+    --paper: 17 17 17;
+    --card: 25 25 25;
+    --column: 20 20 20;
+    --line: 44 44 44;
+    --line-strong: 68 68 68;
+    --ink: 255 255 255;
+    --body: 220 220 216;
+    --muted: 168 168 163;
+    --faint: 122 122 117;
+    --accent: 134 224 138;
+    --accent-soft: 28 46 26;
+    --danger: 253 186 116;
+    --scrim: 0 0 0;
+    color-scheme: dark;
+  }
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -42,12 +77,18 @@
     background-position: right 0.8rem center;
     background-size: 14px 14px;
   }
+  html.dark .select-chevron {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a8a8a3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
 }
 
 /* Thin, quiet scrollbars inside columns and panels */
 .scroll-quiet {
   scrollbar-width: thin;
   scrollbar-color: #cdcdc7 transparent;
+}
+html.dark .scroll-quiet {
+  scrollbar-color: #444444 transparent;
 }
 .scroll-quiet::-webkit-scrollbar {
   width: 8px;
@@ -58,6 +99,9 @@
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: padding-box;
+}
+html.dark .scroll-quiet::-webkit-scrollbar-thumb {
+  background: #444444;
 }
 
 @keyframes rise {

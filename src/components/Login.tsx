@@ -3,8 +3,13 @@ import { ArrowRight } from 'lucide-react';
 import { api, ApiError, errorMessage } from '../api';
 import type { Role, Session } from '../types';
 import { Eyebrow, Wordmark } from './Brand';
+import { ThemeRoot, ThemeToggle } from '../theme';
 
-const STEPS = ['Submit a Ticket', 'Watch the Progress', 'See Your Weekly Usage'];
+const STEPS = [
+  { number: '01', title: 'Submit a Ticket' },
+  { number: '02', title: 'Watch the Progress' },
+  { number: '03', title: 'See Your Weekly Usage' },
+];
 
 export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }) {
   const [role, setRole] = useState<Role>(() =>
@@ -43,57 +48,59 @@ export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }
   const developer = role === 'developer';
 
   return (
-    <div className="flex min-h-screen flex-col bg-night text-white">
-      <header className="mx-auto flex w-full max-w-[1240px] items-center px-4 py-6 sm:px-10">
-        <Wordmark tone="dark" />
+    <ThemeRoot surface="login">
+    <div className="flex min-h-screen flex-col bg-paper text-ink">
+      <header className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 px-4 py-6 sm:px-10">
+        <Wordmark />
+        <ThemeToggle />
       </header>
 
-      <main className="mx-auto grid w-full max-w-[1240px] flex-1 items-center gap-12 px-4 pb-16 sm:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-20">
+      <main className="mx-auto grid w-full max-w-[1400px] flex-1 items-center gap-10 px-4 pb-16 sm:px-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,480px)] lg:gap-x-16 lg:gap-y-10">
         <section className="animate-rise">
-          <Eyebrow tone="dark">{developer ? 'Team access' : 'Client support portal'}</Eyebrow>
+          <Eyebrow>{developer ? 'Team access' : 'Client support portal'}</Eyebrow>
           <h1 className="display mt-5 text-[clamp(40px,6.2vw,78px)] leading-[0.98]">
             Tell us what&rsquo;s broken. We&rsquo;ll take it from there.
           </h1>
-          <ol className="mt-10 hidden max-w-2xl gap-3 sm:grid sm:grid-cols-3">
-            {STEPS.map((title) => (
-              <li key={title} className="rounded-2xl border border-night-line bg-night-2 p-5">
-                <p className="font-display text-[17px] font-bold leading-snug tracking-tight">{title}</p>
-              </li>
-            ))}
-          </ol>
         </section>
 
-        <section className="animate-rise rounded-3xl border border-night-line bg-night-2 p-6 sm:p-9" style={{ animationDelay: '60ms' }}>
+        <ol className="order-2 hidden w-full gap-4 sm:grid sm:grid-cols-3 lg:order-none lg:col-span-2">
+          {STEPS.map((step) => (
+            <li key={step.number} className="rounded-2xl border border-line bg-card px-5 py-5">
+              <span className="font-mono text-[11px] font-semibold text-accent">{step.number}</span>
+              <p className="mt-3 whitespace-nowrap font-display text-[17px] font-bold tracking-tight">{step.title}</p>
+            </li>
+          ))}
+        </ol>
+
+        <section className="order-3 animate-rise rounded-3xl border border-line bg-card p-6 sm:p-9 lg:order-none" style={{ animationDelay: '60ms' }}>
           <h2 className="font-display text-[26px] font-bold tracking-tight">{developer ? 'Developer sign in' : 'Client Login'}</h2>
-          <p className="mt-2 text-[15px] text-white/55">
-            {developer ? 'Enter your email and the team password.' : 'Sign in With Your Whitelisted Email'}
-          </p>
+          {!developer && <p className="mt-2 text-[15px] text-muted">Sign in With Your Whitelisted Email</p>}
 
           <form onSubmit={submit} className="mt-7 space-y-4">
             {developer ? (
               <>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-white/70">Email address</span>
+                  <span className="mb-2 block text-sm font-medium text-body">Email address</span>
                   <input
                     type="email"
                     autoComplete="username"
                     inputMode="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
+                    className="field h-12 !bg-paper"
                     placeholder="you@company.com"
                     required
                     autoFocus={!focusPassword}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-white/70">Team password</span>
+                  <span className="mb-2 block text-sm font-medium text-body">Team password</span>
                   <input
                     type="password"
                     autoComplete="current-password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
-                    className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
+                    className="field h-12 !bg-paper"
                     placeholder="••••••••"
                     required
                     autoFocus={focusPassword}
@@ -102,15 +109,15 @@ export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }
               </>
             ) : (
               <label className="block">
-                <span className="mb-2 block text-sm font-medium text-white/70">Email address</span>
                 <input
                   type="email"
                   autoComplete="email"
                   inputMode="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
+                  className="field h-12 !bg-paper"
                   placeholder="you@company.com"
+                  aria-label="Email address"
                   required
                   autoFocus
                 />
@@ -118,7 +125,7 @@ export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }
             )}
 
             {error && (
-              <p role="alert" className="rounded-xl border border-orange-900/60 bg-orange-950/40 px-4 py-3 text-sm text-orange-200">
+              <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
                 {error}
               </p>
             )}
@@ -130,7 +137,7 @@ export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }
             <button
               type="button"
               onClick={() => switchRole(developer ? 'client' : 'developer')}
-              className="mx-auto flex h-11 items-center justify-center rounded-full border border-night-line px-6 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white"
+              className="mx-auto flex h-11 items-center justify-center rounded-full border border-line px-6 text-sm font-medium text-body transition hover:border-line-strong hover:text-ink"
             >
               {developer ? 'Client sign in' : 'Developer login'}
             </button>
@@ -138,5 +145,6 @@ export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }
         </section>
       </main>
     </div>
+    </ThemeRoot>
   );
 }

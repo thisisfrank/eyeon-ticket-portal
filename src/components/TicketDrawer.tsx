@@ -124,7 +124,7 @@ export function TicketDrawer(props: Props) {
 
   return (
     <div className="fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label={`Ticket ${ticket.number ?? ''}`}>
-      <button type="button" className="absolute inset-0 h-full w-full cursor-default bg-ink/25" onClick={onClose} aria-label="Close ticket" tabIndex={-1} />
+      <button type="button" className="absolute inset-0 h-full w-full cursor-default bg-scrim/40" onClick={onClose} aria-label="Close ticket" tabIndex={-1} />
       <aside className="animate-slide-in absolute right-0 top-0 flex h-full w-full flex-col border-l border-line bg-card shadow-2xl sm:w-[520px]">
         <div className="border-b border-line px-5 pb-5 pt-5 sm:px-7">
           <div className="flex items-center justify-between gap-3">
