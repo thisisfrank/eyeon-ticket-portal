@@ -27,7 +27,7 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
     setError('');
     setBusy(true);
     try {
-      onSignedIn(await api.login(role, role === 'developer' ? password : email));
+      onSignedIn(await api.login(role, { email, password }));
     } catch (loginError) {
       setError(errorMessage(loginError, 'Could not sign in.'));
       setBusy(false);
@@ -70,24 +70,39 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
         <section className="animate-rise rounded-3xl border border-night-line bg-night-2 p-6 sm:p-9" style={{ animationDelay: '60ms' }}>
           <h2 className="font-display text-[26px] font-bold tracking-tight">{developer ? 'Developer sign in' : 'Sign in'}</h2>
           <p className="mt-2 text-[15px] text-white/55">
-            {developer ? 'Enter the team password to open the full board.' : 'Use the email address your developer added to the portal.'}
+            {developer ? 'Enter your email and the team password.' : 'Use the email address your developer added to the portal.'}
           </p>
 
           <form onSubmit={submit} className="mt-7 space-y-4">
             {developer ? (
-              <label className="block">
-                <span className="mb-2 block text-sm font-medium text-white/70">Team password</span>
-                <input
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
-                  placeholder="••••••••"
-                  required
-                  autoFocus
-                />
-              </label>
+              <>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-white/70">Email address</span>
+                  <input
+                    type="email"
+                    autoComplete="username"
+                    inputMode="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
+                    placeholder="you@company.com"
+                    required
+                    autoFocus
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-white/70">Team password</span>
+                  <input
+                    type="password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
+                    placeholder="••••••••"
+                    required
+                  />
+                </label>
+              </>
             ) : (
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-white/70">Email address</span>

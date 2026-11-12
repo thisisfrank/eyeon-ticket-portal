@@ -19,7 +19,7 @@ export interface NewTicketInput {
 /** Everything the UI needs from a server. The live one talks to /api; the demo one runs in the browser. */
 export interface Backend {
   me(): Promise<{ user: SessionUser | null; features?: Features; demo?: boolean }>;
-  login(role: Role, credential: string): Promise<Session>;
+  login(role: Role, input: { email?: string; password?: string }): Promise<Session>;
   logout(): Promise<{ ok: true }>;
   board(): Promise<BoardData>;
   createTicket(input: NewTicketInput): Promise<{ ticket: Ticket }>;
@@ -63,10 +63,10 @@ async function request<T>(path: string, init: { method?: string; body?: unknown 
 
 const liveBackend: Backend = {
   me: () => request('me'),
-  login: (role, credential) =>
+  login: (role, input) =>
     request('login', {
       method: 'POST',
-      body: role === 'developer' ? { role, password: credential } : { role, email: credential },
+      body: role === 'developer' ? { role, email: input.email, password: input.password } : { role, email: input.email },
     }),
   logout: () => request('logout', { method: 'POST' }),
   board: () => request('board'),
@@ -81,7 +81,7 @@ const current = () => (isDemoActive() ? demoBackend : liveBackend);
 
 export const api: Backend = {
   me: () => current().me(),
-  login: (role, credential) => liveBackend.login(role, credential),
+  login: (role, input) => liveBackend.login(role, input),
   logout: () => current().logout(),
   board: () => current().board(),
   createTicket: (input) => current().createTicket(input),

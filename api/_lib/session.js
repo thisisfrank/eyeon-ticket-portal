@@ -49,6 +49,19 @@ export function isAllowedClient(email) {
   );
 }
 
+export function allowedDeveloperEntries() {
+  return (process.env.DEV_EMAILS || '')
+    .split(/[\s,;]+/)
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isAllowedDeveloper(email) {
+  const normalized = String(email || '').trim().toLowerCase();
+  if (!normalized) return false;
+  return allowedDeveloperEntries().includes(normalized);
+}
+
 export function passwordMatches(candidate) {
   const expected = process.env.DEV_PASSWORD;
   if (!expected) return false;
@@ -90,7 +103,9 @@ export function currentUser(req) {
   }
   if (!user?.exp || user.exp < Date.now()) return null;
   if (user.role === 'client') return isAllowedClient(user.email) ? user : null;
-  if (user.role === 'developer') return user.pv === passwordVersion() ? user : null;
+  if (user.role === 'developer') {
+    return user.pv === passwordVersion() && isAllowedDeveloper(user.email) ? user : null;
+  }
   return null;
 }
 

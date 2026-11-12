@@ -130,8 +130,6 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
     [data.tickets]
   );
 
-  const stats = useMemo(() => boardStats(data.tickets, repliesByTicket), [data.tickets, repliesByTicket]);
-
   const visibleTickets = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return data.tickets.filter((ticket) => {
@@ -145,6 +143,8 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
         .includes(needle);
     });
   }, [data.tickets, query, typeFilter, projectFilter, onlyNeedsReply, repliesByTicket]);
+
+  const stats = useMemo(() => boardStats(visibleTickets, repliesByTicket), [visibleTickets, repliesByTicket]);
 
   const columns = useMemo(
     () =>
@@ -328,11 +328,7 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
           </div>
         </div>
 
-        {developer && !loading && (
-          <StatStrip stats={stats} needsReplyActive={onlyNeedsReply} onToggleNeedsReply={() => setOnlyNeedsReply((value) => !value)} />
-        )}
-
-        <div className={`${developer && !loading ? 'mt-4' : 'mt-7'} flex flex-wrap gap-2.5`}>
+        <div className="mt-7 flex flex-wrap gap-2.5">
           <label className="relative min-w-[220px] flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
             <input
@@ -383,7 +379,11 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
           ))}
         </div>
       ) : (
-        <div className="scroll-quiet mx-auto flex w-full max-w-[1600px] flex-1 snap-x gap-4 overflow-x-auto px-4 pb-6 sm:px-6">
+        <div className="scroll-quiet mx-auto w-full max-w-[1600px] flex-1 snap-x overflow-x-auto px-4 pb-6 sm:px-6">
+          {developer && !loading && (
+            <StatStrip stats={stats} needsReplyActive={onlyNeedsReply} onToggleNeedsReply={() => setOnlyNeedsReply((value) => !value)} />
+          )}
+          <div className="flex w-full gap-4">
           {columns.map((column, columnIndex) => (
             <section
               key={column.id}
@@ -465,6 +465,7 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
               </div>
             </section>
           ))}
+          </div>
         </div>
       )}
 

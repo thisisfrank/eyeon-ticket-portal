@@ -4,7 +4,7 @@ A ticket board on top of a Softr database. It has one screen with four columns (
 
 | | Clients | Developers |
 |---|---|---|
-| Sign in | Email address on the allow list | Team password |
+| Sign in | Email address on the allow list | Email on the developer list, plus the shared team password |
 | Sees | Only their own tickets | Every ticket, with project and type filters |
 | Submit tickets | Yes, with images or PDFs | Yes, for any client |
 | Reply on a thread | Yes, with attachments | Yes, posted as "Team" |
@@ -52,7 +52,8 @@ To give a client access, add their email to `CLIENT_EMAILS` and redeploy. Removi
 | `SOFTR_TICKETS_TABLE_ID` | yes | Tickets table ID |
 | `SOFTR_REPLIES_TABLE_ID` | yes | Replies table ID |
 | `SOFTR_WEEKS_TABLE_ID` | no | Weekly Hours table. Shows the developer week bar. |
-| `DEV_PASSWORD` | yes | Developer password |
+| `DEV_PASSWORD` | yes | Shared developer password |
+| `DEV_EMAILS` | yes | Comma-separated emails allowed to use that password |
 | `CLIENT_EMAILS` | yes | Comma-separated emails, or `@domain.com` for a whole domain |
 | `SESSION_SECRET` | yes | 16+ random characters for signing session cookies |
 | `BLOB_READ_WRITE_TOKEN` | no | Turns on attachments (see below) |
