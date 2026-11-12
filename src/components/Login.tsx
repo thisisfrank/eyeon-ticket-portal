@@ -4,11 +4,7 @@ import { api, ApiError, errorMessage } from '../api';
 import type { Role, Session } from '../types';
 import { Eyebrow, Wordmark } from './Brand';
 
-const STEPS = [
-  { number: '01', title: 'Submit', text: 'Describe the issue and attach screenshots.' },
-  { number: '02', title: 'We respond', text: 'Replies land right on your ticket.' },
-  { number: '03', title: 'Resolved', text: 'Follow it from new to closed.' },
-];
+const STEPS = ['Submit a Ticket', 'Watch the Progress', 'See Your Weekly Usage'];
 
 export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }) {
   const [role, setRole] = useState<Role>(() =>
@@ -58,25 +54,20 @@ export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }
           <h1 className="display mt-5 text-[clamp(40px,6.2vw,78px)] leading-[0.98]">
             Tell us what&rsquo;s broken. We&rsquo;ll take it from there.
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/65">
-            Submit a ticket, attach screenshots, and follow every reply in one place, from the first message to the fix.
-          </p>
           <ol className="mt-10 hidden max-w-2xl gap-3 sm:grid sm:grid-cols-3">
-            {STEPS.map((step) => (
-              <li key={step.number} className="rounded-2xl border border-night-line bg-night-2 p-5">
-                <span className="font-mono text-[11px] font-semibold text-mint">{step.number}</span>
-                <p className="mt-3 font-display text-[17px] font-bold tracking-tight">{step.title}</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-white/55">{step.text}</p>
+            {STEPS.map((title) => (
+              <li key={title} className="rounded-2xl border border-night-line bg-night-2 p-5">
+                <p className="font-display text-[17px] font-bold leading-snug tracking-tight">{title}</p>
               </li>
             ))}
           </ol>
         </section>
 
         <section className="animate-rise rounded-3xl border border-night-line bg-night-2 p-6 sm:p-9" style={{ animationDelay: '60ms' }}>
-          <h2 className="font-display text-[26px] font-bold tracking-tight">
-            {developer ? 'Developer sign in' : 'Sign in With Your Whitelisted Email'}
-          </h2>
-          {developer && <p className="mt-2 text-[15px] text-white/55">Enter your email and the team password.</p>}
+          <h2 className="font-display text-[26px] font-bold tracking-tight">{developer ? 'Developer sign in' : 'Client Login'}</h2>
+          <p className="mt-2 text-[15px] text-white/55">
+            {developer ? 'Enter your email and the team password.' : 'Sign in With Your Whitelisted Email'}
+          </p>
 
           <form onSubmit={submit} className="mt-7 space-y-4">
             {developer ? (
