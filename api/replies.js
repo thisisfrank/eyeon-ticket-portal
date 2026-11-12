@@ -2,7 +2,7 @@ import { HttpError, readBody, route } from './_lib/http.js';
 import { requireUser } from './_lib/session.js';
 import { assertRecordId, choiceId, getRecord, saveRecord, writeWithShapes } from './_lib/softr.js';
 import { FROM, REPLY, TICKET } from './_lib/fields.js';
-import { toReply, toTicket } from './_lib/records.js';
+import { ticketOwnedBy, toReply, toTicket } from './_lib/records.js';
 import { discardUploads, releaseUploads, saveWithFiles, uploadFiles } from './_lib/uploads.js';
 
 export default route({
@@ -17,7 +17,7 @@ export default route({
 
     const ticket = toTicket(await getRecord('tickets', ticketId));
     const client = user.role === 'client';
-    if (client && ticket.clientEmail !== user.email) throw new HttpError(404, 'Ticket not found.');
+    if (client && !ticketOwnedBy(ticket, user.email)) throw new HttpError(404, 'Ticket not found.');
 
     const author = client ? ticket.clientName || user.email : process.env.TEAM_NAME || 'Team';
     const values = {

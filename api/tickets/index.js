@@ -2,7 +2,7 @@ import { HttpError, readBody, route } from '../_lib/http.js';
 import { requireUser } from '../_lib/session.js';
 import { choiceId, listRecords, saveRecord } from '../_lib/softr.js';
 import { STATUS, TICKET } from '../_lib/fields.js';
-import { forViewer, newestFirst, toTicket } from '../_lib/records.js';
+import { forViewer, newestFirst, ticketOwnedBy, toTicket } from '../_lib/records.js';
 import { discardUploads, releaseUploads, saveWithFiles, uploadFiles } from '../_lib/uploads.js';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -23,7 +23,7 @@ export default route({
     if (owner && !EMAIL.test(owner)) throw new HttpError(400, 'Enter a valid client email.');
 
     const history = owner
-      ? (await listRecords('tickets')).map(toTicket).filter((ticket) => ticket.clientEmail === owner).sort(newestFirst)
+      ? (await listRecords('tickets')).map(toTicket).filter((ticket) => ticketOwnedBy(ticket, owner)).sort(newestFirst)
       : [];
     const projects = [...new Set(history.map((ticket) => ticket.project).filter(Boolean))];
     const requested = String(input.project || '').trim();
@@ -40,7 +40,7 @@ export default route({
       [TICKET.description]: description,
       [TICKET.status]: await choiceId('tickets', TICKET.status, STATUS.new),
       [TICKET.type]: input.type ? await choiceId('tickets', TICKET.type, input.type) : undefined,
-      [TICKET.clientEmail]: owner || undefined,
+      [TICKET.clientEmail]: source?.clientEmail || owner || undefined,
       [TICKET.clientName]: source?.clientName || undefined,
       [TICKET.project]: project || undefined,
       [TICKET.projectId]: sameProject ? source?.projectId || undefined : undefined,

@@ -2,7 +2,7 @@ import { route } from './_lib/http.js';
 import { requireUser } from './_lib/session.js';
 import { choices, listRecords, settings } from './_lib/softr.js';
 import { TICKET } from './_lib/fields.js';
-import { forViewer, repliesFor, toReply, toTicket, toWeek } from './_lib/records.js';
+import { forViewer, repliesFor, ticketOwnedBy, toReply, toTicket, toWeek } from './_lib/records.js';
 
 export default route({
   async GET(req) {
@@ -17,7 +17,7 @@ export default route({
     ]);
 
     let tickets = ticketRows.map(toTicket);
-    if (!developer) tickets = tickets.filter((ticket) => ticket.clientEmail && ticket.clientEmail === user.email);
+    if (!developer) tickets = tickets.filter((ticket) => ticketOwnedBy(ticket, user.email));
 
     return {
       tickets: tickets.map((ticket) => forViewer(ticket, user)),

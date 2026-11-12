@@ -1,5 +1,6 @@
 import type { Reply, Ticket } from '../types';
 import { columnOf } from './board';
+import type { SeenMap } from './seen';
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -13,6 +14,15 @@ export function needsTeamReply(ticket: Ticket, thread: Reply[] | undefined): boo
   const last = thread?.[thread.length - 1];
   if (last) return last.from === 'Client';
   return column === 'New' && !ticket.response;
+}
+
+/** The newest message is from the team, and this client has not opened it yet. */
+export function waitingOnClient(ticket: Ticket, thread: Reply[] | undefined, seenAt = 0): boolean {
+  const column = columnOf(ticket);
+  if (!column || column === 'Closed') return false;
+  const last = thread?.[thread.length - 1];
+  if (!last || last.from === 'Client') return false;
+  return (Date.parse(last.posted) || 0) > seenAt;
 }
 
 export function formatDuration(ms: number): string {
@@ -62,4 +72,31 @@ export function boardStats(tickets: Ticket[], repliesByTicket: Map<string, Reply
     : null;
 
   return { open, needsReply, newThisWeek, firstReplyMs, firstReplySample: firstReplies.length };
+}
+
+export interface ClientStats {
+  waiting: number;
+  open: number;
+  closedThisWeek: number;
+}
+
+export function clientBoardStats(
+  tickets: Ticket[],
+  repliesByTicket: Map<string, Reply[]>,
+  seen: SeenMap,
+  now = Date.now(),
+): ClientStats {
+  let waiting = 0;
+  let open = 0;
+  let closedThisWeek = 0;
+  const weekAgo = now - 7 * DAY;
+
+  for (const ticket of tickets) {
+    const column = columnOf(ticket);
+    if (waitingOnClient(ticket, repliesByTicket.get(ticket.id), seen[ticket.id] || 0)) waiting += 1;
+    if (column && column !== 'Closed') open += 1;
+    if (column === 'Closed' && (Date.parse(ticket.updated) || 0) >= weekAgo) closedThisWeek += 1;
+  }
+
+  return { waiting, open, closedThisWeek };
 }

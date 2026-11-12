@@ -5,8 +5,8 @@ import type { BoardData, Reply, Session, Ticket } from '../types';
 import { COLUMNS, columnLabel, columnOf, type ColumnId } from '../lib/board';
 import { compareTickets, rankBetween } from '../lib/format';
 import { newestReplyTimes, readSeen, seenKeyFor, writeSeen, type SeenMap } from '../lib/seen';
-import { boardStats, needsTeamReply } from '../lib/stats';
-import { StatStrip } from './StatStrip';
+import { boardStats, clientBoardStats, needsTeamReply, waitingOnClient } from '../lib/stats';
+import { ClientStatStrip, StatStrip } from './StatStrip';
 import { Eyebrow, Wordmark } from './Brand';
 import { TicketCard } from './TicketCard';
 import { TicketDrawer } from './TicketDrawer';
@@ -35,6 +35,7 @@ export function Board({ session, onSignOut }: Props) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [projectFilter, setProjectFilter] = useState('all');
   const [onlyNeedsReply, setOnlyNeedsReply] = useState(false);
+  const [onlyWaitingOnYou, setOnlyWaitingOnYou] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -114,10 +115,9 @@ export function Board({ session, onSignOut }: Props) {
     [data.tickets]
   );
 
-  const visibleTickets = useMemo(() => {
+  const scopedTickets = useMemo(() => {
     const needle = query.trim().toLowerCase();
     return data.tickets.filter((ticket) => {
-      if (onlyNeedsReply && !needsTeamReply(ticket, repliesByTicket.get(ticket.id))) return false;
       if (typeFilter !== 'all' && ticket.type !== typeFilter) return false;
       if (projectFilter !== 'all' && ticket.project !== projectFilter) return false;
       if (!needle) return true;
@@ -126,9 +126,21 @@ export function Board({ session, onSignOut }: Props) {
         .toLowerCase()
         .includes(needle);
     });
-  }, [data.tickets, query, typeFilter, projectFilter, onlyNeedsReply, repliesByTicket]);
+  }, [data.tickets, query, typeFilter, projectFilter]);
+
+  const visibleTickets = useMemo(() => {
+    return scopedTickets.filter((ticket) => {
+      if (developer && onlyNeedsReply && !needsTeamReply(ticket, repliesByTicket.get(ticket.id))) return false;
+      if (!developer && onlyWaitingOnYou && !waitingOnClient(ticket, repliesByTicket.get(ticket.id), seen[ticket.id] || 0)) return false;
+      return true;
+    });
+  }, [scopedTickets, developer, onlyNeedsReply, onlyWaitingOnYou, repliesByTicket, seen]);
 
   const stats = useMemo(() => boardStats(visibleTickets, repliesByTicket), [visibleTickets, repliesByTicket]);
+  const clientStats = useMemo(
+    () => clientBoardStats(scopedTickets, repliesByTicket, seen),
+    [scopedTickets, repliesByTicket, seen],
+  );
 
   const columns = useMemo(
     () =>
@@ -268,13 +280,17 @@ export function Board({ session, onSignOut }: Props) {
             <h1 className="display mt-3 text-[clamp(34px,4.4vw,56px)] leading-[0.98]">
               {developer ? devHeadline : 'What can we help with?'}
             </h1>
-            {!developer && (
-              <p className="mt-3 text-[17px] leading-relaxed text-body">
-                {total === 0 && !loading
-                  ? 'You haven’t submitted any tickets yet. Use New ticket to send your first one, with screenshots if you have them.'
-                  : 'Submit a ticket, attach screenshots, and reply right on the thread. We keep the status up to date as we work.'}
-              </p>
-            )}
+            {!developer &&
+              (total === 0 && !loading ? (
+                <p className="mt-3 text-[17px] leading-relaxed text-body">
+                  You haven’t submitted any tickets yet. Use New ticket to send your first one, with screenshots if
+                  you have them.
+                </p>
+              ) : (
+                <p className="mt-3 text-[17px] leading-relaxed text-body">
+                  Check back anytime to see status. You’ll still receive emails upon changes.
+                </p>
+              ))}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -345,8 +361,16 @@ export function Board({ session, onSignOut }: Props) {
           ))}
         </div>
       ) : (
+        <>
+        {!developer && (
+          <ClientStatStrip
+            stats={clientStats}
+            active={onlyWaitingOnYou}
+            onToggle={() => setOnlyWaitingOnYou((value) => !value)}
+          />
+        )}
         <div className="scroll-quiet mx-auto w-full max-w-[1600px] flex-1 snap-x overflow-x-auto px-4 pb-6 sm:px-6">
-          {developer && !loading && (
+          {developer && (
             <StatStrip stats={stats} needsReplyActive={onlyNeedsReply} onToggleNeedsReply={() => setOnlyNeedsReply((value) => !value)} />
           )}
           <div className="flex w-full gap-4">
@@ -419,7 +443,7 @@ export function Board({ session, onSignOut }: Props) {
                 )}
                 {column.tickets.length === 0 && (
                   <div className="grid h-28 place-items-center rounded-xl border border-dashed border-line-strong px-4 text-center text-sm text-faint">
-                    {developer ? 'Drop tickets here' : column.id === 'New' ? 'Nothing waiting. New tickets show up here.' : 'Nothing here yet'}
+                    {developer ? 'Drop tickets here' : null}
                   </div>
                 )}
               </div>
@@ -427,6 +451,7 @@ export function Board({ session, onSignOut }: Props) {
           ))}
           </div>
         </div>
+        </>
       )}
 
       {selected && (

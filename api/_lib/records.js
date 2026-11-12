@@ -54,6 +54,19 @@ export function attachments(value) {
     }));
 }
 
+/** Client Email can list more than one person, separated by commas. */
+export function clientEmails(value) {
+  return String(value || '')
+    .split(/[,;]+/)
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function ticketOwnedBy(ticket, email) {
+  const wanted = String(email || '').trim().toLowerCase();
+  return Boolean(wanted) && clientEmails(ticket.clientEmail).includes(wanted);
+}
+
 export function toTicket(record) {
   const f = record.fields || {};
   const number = f[TICKET.number];

@@ -1,7 +1,7 @@
 import { HttpError, route } from './_lib/http.js';
 import { requireUser } from './_lib/session.js';
 import { getRecord, listRecords, settings, softrFetchFile } from './_lib/softr.js';
-import { toReply, toTicket } from './_lib/records.js';
+import { ticketOwnedBy, toReply, toTicket } from './_lib/records.js';
 
 // Serves Softr-hosted attachments. Softr file URLs need the API key, so they
 // go through here, and clients can only open files on their own tickets.
@@ -10,7 +10,7 @@ const FILE_PATH = /^v1\/attachments\/([\w-]+)\/([A-Za-z0-9]+)\/([A-Za-z0-9]+)\/[
 async function clientOwns(email, tableKey, recordId) {
   const mine = (await listRecords('tickets', { maxAge: 30_000 }))
     .map(toTicket)
-    .filter((ticket) => ticket.clientEmail === email);
+    .filter((ticket) => ticketOwnedBy(ticket, email));
   if (tableKey === 'tickets') return mine.some((ticket) => ticket.id === recordId);
   if (mine.some((ticket) => ticket.replyIds.includes(recordId))) return true;
   const reply = toReply(await getRecord('replies', recordId));
