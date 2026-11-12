@@ -9,18 +9,9 @@ A ticket board on top of a Softr database. It has one screen with four columns (
 | Submit tickets | Yes, with images or PDFs | Yes, for any client |
 | Reply on a thread | Yes, with attachments | Yes, posted as "Team" |
 | Drag between columns / reorder | No | Yes (updates Status, Working and Board Rank) |
-| Time tracking, internal notes, weekly hours | Hidden | Yes |
+| Internal notes | Hidden | Yes |
 
 React + Vite on the front end, with a few small serverless functions in `/api` that hold the Softr key and enforce who can see what. It's built to deploy on Vercel.
-
-## Demo accounts
-
-The sign-in page has **Demo client** and **Demo developer** buttons. They open the same board filled with sample tickets: Jordan Reyes at Meridian Concrete as the client, plus two other clients only the developer sees. Everything works there, including submitting tickets, attachments, replies, dragging, timers and weekly hours. It all runs in the browser:
-
-- Nothing is sent to Softr, and no server settings are needed. A plain `npm run dev` with an empty `.env` is enough to try it.
-- Changes are saved in that browser only. The banner at the top switches between the client and developer views, so you can reply as one side and watch it arrive on the other. **Reset** starts over with fresh sample data.
-- Share a direct link with `/?demo=client` or `/?demo=developer`.
-- To hide the buttons on a real client deployment, set `VITE_DEMO=off`. The sample data lives in [`src/demo/seed.ts`](src/demo/seed.ts).
 
 ## Run it locally
 
@@ -59,7 +50,6 @@ To give a client access, add their email to `CLIENT_EMAILS` and redeploy. Removi
 | `BLOB_READ_WRITE_TOKEN` | no | Turns on attachments (see below) |
 | `TEAM_NAME` | no | Author name on developer replies. Defaults to "Team". |
 | `SOFTR_RECORD_URL` | no | Template for an "Open in Softr" link, e.g. `https://portal.example.com/ticket-team?recordId={id}` |
-| `VITE_DEMO` | no | `off` hides the demo buttons on the sign-in page. Read at build time, so redeploy after changing it. |
 
 ## Softr tables it expects
 
@@ -103,7 +93,6 @@ api/                 Serverless functions (Vercel)
   login.js, logout.js, me.js
 src/
   components/        Board, TicketCard, TicketDrawer, NewTicketModal, Login, ...
-  demo/              In-browser demo backend and sample data
   lib/               Formatting, board columns, image handling, read tracking
   brand.ts           Names shown in the UI
 tailwind.config.js   Brand colors and fonts

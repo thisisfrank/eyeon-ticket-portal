@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { api, errorMessage } from '../api';
+import { ArrowRight } from 'lucide-react';
+import { api, ApiError, errorMessage } from '../api';
 import type { Role, Session } from '../types';
 import { Eyebrow, Wordmark } from './Brand';
 
@@ -10,10 +10,7 @@ const STEPS = [
   { number: '03', title: 'Resolved', text: 'Follow it from new to closed.' },
 ];
 
-// Demo buttons show unless the deployment sets VITE_DEMO=off.
-const DEMO_ENABLED = import.meta.env.VITE_DEMO !== 'off';
-
-export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) => void; onDemo: (role: Role) => void }) {
+export function Login({ onSignedIn }: { onSignedIn: (session: Session) => void }) {
   const [role, setRole] = useState<Role>(() =>
     new URLSearchParams(window.location.search).has('team') ? 'developer' : 'client'
   );
@@ -21,6 +18,7 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [focusPassword, setFocusPassword] = useState(false);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -29,13 +27,20 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
     try {
       onSignedIn(await api.login(role, { email, password }));
     } catch (loginError) {
-      setError(errorMessage(loginError, 'Could not sign in.'));
+      if (role === 'client' && loginError instanceof ApiError && loginError.code === 'developer') {
+        setRole('developer');
+        setFocusPassword(true);
+        setError('This email is a developer account. Enter the team password.');
+      } else {
+        setError(errorMessage(loginError, 'Could not sign in.'));
+      }
       setBusy(false);
     }
   };
 
   const switchRole = (next: Role) => {
     setRole(next);
+    setFocusPassword(false);
     setError('');
   };
 
@@ -68,10 +73,10 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
         </section>
 
         <section className="animate-rise rounded-3xl border border-night-line bg-night-2 p-6 sm:p-9" style={{ animationDelay: '60ms' }}>
-          <h2 className="font-display text-[26px] font-bold tracking-tight">{developer ? 'Developer sign in' : 'Sign in'}</h2>
-          <p className="mt-2 text-[15px] text-white/55">
-            {developer ? 'Enter your email and the team password.' : 'Use the email address your developer added to the portal.'}
-          </p>
+          <h2 className="font-display text-[26px] font-bold tracking-tight">
+            {developer ? 'Developer sign in' : 'Sign in With Your Whitelisted Email'}
+          </h2>
+          {developer && <p className="mt-2 text-[15px] text-white/55">Enter your email and the team password.</p>}
 
           <form onSubmit={submit} className="mt-7 space-y-4">
             {developer ? (
@@ -87,7 +92,7 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
                     className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
                     placeholder="you@company.com"
                     required
-                    autoFocus
+                    autoFocus={!focusPassword}
                   />
                 </label>
                 <label className="block">
@@ -100,6 +105,7 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
                     className="h-12 w-full rounded-xl border border-night-line bg-night px-4 text-[15px] text-white placeholder:text-white/30 transition focus:border-accent-fill focus:shadow-glow focus:outline-none"
                     placeholder="••••••••"
                     required
+                    autoFocus={focusPassword}
                   />
                 </label>
               </>
@@ -130,44 +136,14 @@ export function Login({ onSignedIn, onDemo }: { onSignedIn: (session: Session) =
               {busy ? 'Checking…' : developer ? 'Open the board' : 'Continue'}
               {!busy && <ArrowRight className="h-4 w-4" />}
             </button>
+            <button
+              type="button"
+              onClick={() => switchRole(developer ? 'client' : 'developer')}
+              className="mx-auto flex h-11 items-center justify-center rounded-full border border-night-line px-6 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white"
+            >
+              {developer ? 'Client sign in' : 'Developer login'}
+            </button>
           </form>
-
-          <div className="mt-7 border-t border-night-line pt-5 text-sm">
-            {developer ? (
-              <button type="button" onClick={() => switchRole('client')} className="inline-flex items-center gap-1.5 text-white/60 transition hover:text-white">
-                <ArrowLeft className="h-3.5 w-3.5" /> Client sign in
-              </button>
-            ) : (
-              <button type="button" onClick={() => switchRole('developer')} className="inline-flex items-center gap-1.5 text-white/60 transition hover:text-white">
-                Developer? Sign in with the team password <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-
-          {DEMO_ENABLED && (
-            <div className="mt-6 rounded-2xl border border-dashed border-night-line p-4">
-              <p className="text-sm font-medium text-white/80">Just looking around?</p>
-              <p className="mt-1 text-[13px] leading-relaxed text-white/50">
-                Open a demo account with sample tickets. Nothing you do there is saved to the real board.
-              </p>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => onDemo('client')}
-                  className="h-10 rounded-full border border-night-line text-sm font-medium text-white transition hover:border-mint hover:text-mint"
-                >
-                  Demo client
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDemo('developer')}
-                  className="h-10 rounded-full border border-night-line text-sm font-medium text-white transition hover:border-mint hover:text-mint"
-                >
-                  Demo developer
-                </button>
-              </div>
-            </div>
-          )}
         </section>
       </main>
     </div>

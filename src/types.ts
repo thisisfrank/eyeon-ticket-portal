@@ -15,8 +15,6 @@ export interface Features {
 export interface Session {
   user: SessionUser;
   features: Features;
-  /** True for the in-browser demo, which uses sample data and never calls the server. */
-  demo?: boolean;
 }
 
 export interface Attachment {

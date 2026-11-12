@@ -33,6 +33,9 @@ export default route({
     const normalized = String(email || '').trim().toLowerCase();
     if (!EMAIL.test(normalized)) throw new HttpError(400, 'Enter a valid email address.');
     if (!isAllowedClient(normalized)) {
+      if (isAllowedDeveloper(normalized)) {
+        throw new HttpError(403, 'Enter the team password for this email.', undefined, 'developer');
+      }
       await pause();
       throw new HttpError(403, 'This email doesn’t have access yet. Ask your developer to add it.');
     }

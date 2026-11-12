@@ -6,7 +6,6 @@ import { formatWhen, ticketTitle } from '../lib/format';
 import { COLUMNS, columnLabel, columnOf } from '../lib/board';
 import { filesFromClipboard, prepareFiles, releasePreview, toUpload } from '../lib/files';
 import { AttachButton, AttachmentList, PendingFiles } from './Files';
-import { TimeControl } from './TimeControl';
 import { TypeTag } from './TicketCard';
 
 interface Props {
@@ -14,12 +13,8 @@ interface Props {
   replies: Reply[];
   role: Role;
   features: Features;
-  now: number;
-  timerBusy: boolean;
   onClose: () => void;
   onReplied: (reply: Reply, patch: Partial<Ticket> & { id: string }) => void;
-  onToggleTimer: () => void;
-  onAdjustTimer: (minutes: number) => void;
   onSaveNotes: (notes: string) => void;
 }
 
@@ -54,7 +49,7 @@ function Message({
 }
 
 export function TicketDrawer(props: Props) {
-  const { ticket, replies, role, features, now, timerBusy, onClose } = props;
+  const { ticket, replies, role, features, onClose } = props;
   const developer = role === 'developer';
   const column = columnOf(ticket);
   const columnColor = COLUMNS.find((item) => item.id === column)?.color || '#9b9b95';
@@ -153,23 +148,11 @@ export function TicketDrawer(props: Props) {
             {[ticket.project, developer ? clientLabel : '', `Opened ${formatWhen(ticket.submitted)}`].filter(Boolean).join(' · ')}
           </p>
 
-          {developer && (
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <TimeControl
-                spent={ticket.timeSpent || 0}
-                timerStarted={ticket.timerStarted}
-                now={now}
-                busy={timerBusy}
-                withSteps
-                size="md"
-                onToggle={props.onToggleTimer}
-                onAdjust={props.onAdjustTimer}
-              />
-              {recordUrl && (
-                <a href={recordUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline">
-                  <ExternalLink className="h-3.5 w-3.5" /> Open in Softr
-                </a>
-              )}
+          {developer && recordUrl && (
+            <div className="mt-4">
+              <a href={recordUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline">
+                <ExternalLink className="h-3.5 w-3.5" /> Open in Softr
+              </a>
             </div>
           )}
         </div>

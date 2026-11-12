@@ -1,6 +1,5 @@
 import type { BoardData, Features, Reply, Role, Session, SessionUser, Ticket, UploadFile, Week } from './types';
 import { ApiError } from './lib/errors';
-import { demoBackend, isDemoActive } from './demo/backend';
 
 export { ApiError, errorMessage } from './lib/errors';
 
@@ -16,9 +15,9 @@ export interface NewTicketInput {
   attachments: UploadFile[];
 }
 
-/** Everything the UI needs from a server. The live one talks to /api; the demo one runs in the browser. */
+/** Everything the UI needs from the server. */
 export interface Backend {
-  me(): Promise<{ user: SessionUser | null; features?: Features; demo?: boolean }>;
+  me(): Promise<{ user: SessionUser | null; features?: Features }>;
   login(role: Role, input: { email?: string; password?: string }): Promise<Session>;
   logout(): Promise<{ ok: true }>;
   board(): Promise<BoardData>;
@@ -46,7 +45,7 @@ async function request<T>(path: string, init: { method?: string; body?: unknown 
   }
 
   const text = await response.text();
-  let data: { message?: string } | null = null;
+  let data: { message?: string; code?: string } | null = null;
   try {
     data = text ? JSON.parse(text) : null;
   } catch {
@@ -56,7 +55,7 @@ async function request<T>(path: string, init: { method?: string; body?: unknown 
   if (!response.ok) {
     if (response.status === 401 && path !== 'login') window.dispatchEvent(new Event(SIGNED_OUT_EVENT));
     if (response.status === 413) throw new ApiError('Those files are too large. Try fewer or smaller images.', 413);
-    throw new ApiError(data?.message || `Something went wrong (${response.status}).`, response.status);
+    throw new ApiError(data?.message || `Something went wrong (${response.status}).`, response.status, data?.code);
   }
   return data as T;
 }
@@ -77,15 +76,4 @@ const liveBackend: Backend = {
   saveWeek: (weekStart, changes) => request('weeks', { method: 'POST', body: { weekStart, ...changes } }),
 };
 
-const current = () => (isDemoActive() ? demoBackend : liveBackend);
-
-export const api: Backend = {
-  me: () => current().me(),
-  login: (role, input) => liveBackend.login(role, input),
-  logout: () => current().logout(),
-  board: () => current().board(),
-  createTicket: (input) => current().createTicket(input),
-  updateTicket: (id, changes) => current().updateTicket(id, changes),
-  reply: (ticketId, message, attachments) => current().reply(ticketId, message, attachments),
-  saveWeek: (weekStart, changes) => current().saveWeek(weekStart, changes),
-};
+export const api: Backend = liveBackend;

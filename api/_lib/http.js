@@ -4,10 +4,11 @@ export class HttpError extends Error {
    * @param {string} message Safe, human-readable message
    * @param {number} [upstream] Status Softr returned, when the error came from Softr
    */
-  constructor(status, message, upstream) {
+  constructor(status, message, upstream, code) {
     super(message);
     this.status = status;
     this.upstream = upstream;
+    this.code = code;
   }
 }
 
@@ -35,6 +36,7 @@ export function route(methods) {
       if (res.headersSent) return;
       res.status(known ? error.status : 500).json({
         message: known ? error.message : 'Something went wrong on the server.',
+        ...(known && error.code ? { code: error.code } : {}),
       });
     }
   };

@@ -3,7 +3,6 @@ import { GripVertical, MessageSquare, Paperclip } from 'lucide-react';
 import type { Role, Ticket } from '../types';
 import { formatDay, ticketTitle } from '../lib/format';
 import { TYPE_COLORS } from '../lib/board';
-import { TimeControl } from './TimeControl';
 
 interface Props {
   ticket: Ticket;
@@ -13,14 +12,10 @@ interface Props {
   showProject: boolean;
   draggable: boolean;
   dragging: boolean;
-  now: number;
-  timerBusy: boolean;
   onOpen: () => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
   onDragOver?: (event: DragEvent<HTMLElement>) => void;
-  onToggleTimer?: () => void;
-  onAdjustTimer?: (minutes: number) => void;
 }
 
 export function TypeTag({ type }: { type: string }) {
@@ -33,7 +28,7 @@ export function TypeTag({ type }: { type: string }) {
 }
 
 export function TicketCard(props: Props) {
-  const { ticket, role, replyCount, waitingOnViewer, showProject, draggable, dragging, now, timerBusy, onOpen } = props;
+  const { ticket, role, replyCount, waitingOnViewer, showProject, draggable, dragging, onOpen } = props;
   const title = ticketTitle(ticket.description);
   const developer = role === 'developer';
   const meta = developer ? [ticket.project || 'No project', ticket.clientName].filter(Boolean).join(' · ') : showProject ? ticket.project : '';
@@ -78,16 +73,6 @@ export function TicketCard(props: Props) {
       {meta && <p className="mt-1 truncate text-xs text-muted">{meta}</p>}
 
       <div className="mt-3 flex items-center gap-3 text-xs text-muted">
-        {developer && props.onToggleTimer && props.onAdjustTimer && (
-          <TimeControl
-            spent={ticket.timeSpent || 0}
-            timerStarted={ticket.timerStarted}
-            now={now}
-            busy={timerBusy}
-            onToggle={props.onToggleTimer}
-            onAdjust={props.onAdjustTimer}
-          />
-        )}
         <span className="inline-flex items-center gap-1" title={`${replyCount} ${replyCount === 1 ? 'reply' : 'replies'}`}>
           <MessageSquare className="h-3.5 w-3.5" />
           {replyCount}

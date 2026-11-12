@@ -1,24 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LogOut, Plus, RefreshCw, Search } from 'lucide-react';
 import { api, errorMessage, type TicketChanges } from '../api';
-import type { BoardData, Reply, Role, Session, Ticket, Week } from '../types';
+import type { BoardData, Reply, Session, Ticket } from '../types';
 import { COLUMNS, columnLabel, columnOf, type ColumnId } from '../lib/board';
-import { compareTickets, rankBetween, roundedElapsedSeconds, timerStartedMs } from '../lib/format';
+import { compareTickets, rankBetween } from '../lib/format';
 import { newestReplyTimes, readSeen, seenKeyFor, writeSeen, type SeenMap } from '../lib/seen';
 import { boardStats, needsTeamReply } from '../lib/stats';
 import { StatStrip } from './StatStrip';
 import { Eyebrow, Wordmark } from './Brand';
-import { DemoBanner } from './DemoBanner';
 import { TicketCard } from './TicketCard';
 import { TicketDrawer } from './TicketDrawer';
 import { NewTicketModal } from './NewTicketModal';
-import { WeekBar } from './WeekBar';
 
 interface Props {
   session: Session;
   onSignOut: () => void;
-  onDemoSwitch?: (role: Role) => void;
-  onDemoReset?: () => void;
 }
 
 type DropTarget = { column: ColumnId; index: number };
@@ -26,7 +22,7 @@ type DropTarget = { column: ColumnId; index: number };
 const EMPTY: BoardData = { tickets: [], replies: [], weeks: [], types: [] };
 const QUIET_REFRESH_MS = 30_000;
 
-export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) {
+export function Board({ session, onSignOut }: Props) {
   const { user, features } = session;
   const developer = user.role === 'developer';
 
@@ -43,12 +39,10 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const [saving, setSaving] = useState(false);
-  const [busyTimers, setBusyTimers] = useState<string[]>([]);
-  const [now, setNow] = useState(() => Date.now());
   const lastLoaded = useRef(0);
   const interacting = useRef(false);
-  interacting.current = Boolean(draggedId) || saving || busyTimers.length > 0;
-  const seenKey = seenKeyFor(user, session.demo);
+  interacting.current = Boolean(draggedId) || saving;
+  const seenKey = seenKeyFor(user);
   const [seen, setSeen] = useState<SeenMap>({});
 
   const load = useCallback(async (quiet = false) => {
@@ -89,17 +83,6 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
       document.removeEventListener('visibilitychange', onFocus);
     };
   }, [load]);
-
-  const timerRunning =
-    developer &&
-    (data.tickets.some((ticket) => timerStartedMs(ticket.timerStarted) != null) ||
-      data.weeks.some((week) => timerStartedMs(week.timerStarted) != null));
-
-  useEffect(() => {
-    if (!timerRunning) return;
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, [timerRunning]);
 
   // --- Derived data ----------------------------------------------------------
 
@@ -187,11 +170,10 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
       tickets: current.tickets.map((ticket) => (ticket.id === id ? { ...ticket, ...changes } : ticket)),
     }));
 
-  const saveTicket = async (ticket: Ticket, changes: TicketChanges, kind: 'move' | 'timer' | 'notes') => {
+  const saveTicket = async (ticket: Ticket, changes: TicketChanges, kind: 'move' | 'notes') => {
     const before = data.tickets;
     patchLocal(ticket.id, changes);
     if (kind === 'move') setSaving(true);
-    if (kind === 'timer') setBusyTimers((ids) => [...ids, ticket.id]);
     try {
       await api.updateTicket(ticket.id, changes);
     } catch (saveError) {
@@ -199,20 +181,7 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
       setError(errorMessage(saveError, 'Could not save that change.'));
     } finally {
       if (kind === 'move') setSaving(false);
-      if (kind === 'timer') setBusyTimers((ids) => ids.filter((id) => id !== ticket.id));
     }
-  };
-
-  const toggleTimer = (ticket: Ticket) => {
-    if (busyTimers.includes(ticket.id)) return;
-    const started = timerStartedMs(ticket.timerStarted);
-    if (started == null) return void saveTicket(ticket, { timerStarted: new Date().toISOString() }, 'timer');
-    void saveTicket(ticket, { timeSpent: (ticket.timeSpent || 0) + roundedElapsedSeconds(started), timerStarted: null }, 'timer');
-  };
-
-  const adjustTimer = (ticket: Ticket, minutes: number) => {
-    if (busyTimers.includes(ticket.id)) return;
-    void saveTicket(ticket, { timeSpent: Math.max(0, (ticket.timeSpent || 0) + minutes * 60) }, 'timer');
   };
 
   const handleDrop = (columnId: ColumnId, index: number) => {
@@ -262,21 +231,15 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
     setSelectedId(ticket.id);
   };
 
-  const setWeeks = (update: (weeks: Week[]) => Week[]) => setData((current) => ({ ...current, weeks: update(current.weeks) }));
-
   // --- Render ----------------------------------------------------------------
 
   const total = data.tickets.length;
   const hour = new Date().getHours();
   const devHeadline = hour < 12 ? 'Good morning.' : hour < 18 ? 'Good afternoon.' : 'Good evening.';
-  const showWeekBar = developer && features.weeks && !loading;
   const filterSelect = 'field select-chevron h-11 w-auto min-w-0 text-sm';
 
   return (
     <div className="flex min-h-screen flex-col bg-paper">
-      {session.demo && onDemoSwitch && onDemoReset && (
-        <DemoBanner role={user.role} onSwitch={onDemoSwitch} onReset={onDemoReset} onExit={onSignOut} />
-      )}
       <header className="sticky top-0 z-30 border-b border-line bg-paper/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -387,9 +350,7 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
           {columns.map((column, columnIndex) => (
             <section
               key={column.id}
-              className={`flex min-w-[calc(100vw-56px)] flex-1 snap-start flex-col sm:min-w-[288px] rounded-2xl border border-line bg-column ${
-                showWeekBar ? 'h-[calc(100dvh-150px)]' : 'h-[calc(100dvh-96px)]'
-              } min-h-[440px]`}
+              className="flex min-w-[calc(100vw-56px)] flex-1 snap-start flex-col sm:min-w-[288px] h-[calc(100dvh-96px)] min-h-[440px] rounded-2xl border border-line bg-column"
               aria-label={columnLabel(column.id, user.role)}
               onDragOver={(event) => {
                 if (!draggedId) return;
@@ -427,8 +388,6 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
                       showProject={projects.length > 1}
                       draggable={developer && !saving}
                       dragging={draggedId === ticket.id}
-                      now={now}
-                      timerBusy={busyTimers.includes(ticket.id)}
                       onOpen={() => setSelectedId(ticket.id)}
                       onDragStart={developer ? () => setDraggedId(ticket.id) : undefined}
                       onDragEnd={() => {
@@ -449,8 +408,6 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
                             }
                           : undefined
                       }
-                      onToggleTimer={developer ? () => toggleTimer(ticket) : undefined}
-                      onAdjustTimer={developer ? (minutes) => adjustTimer(ticket, minutes) : undefined}
                     />
                   </div>
                 ))}
@@ -469,20 +426,14 @@ export function Board({ session, onSignOut, onDemoSwitch, onDemoReset }: Props) 
         </div>
       )}
 
-      {showWeekBar && <WeekBar weeks={data.weeks} now={now} onWeeksChange={setWeeks} onError={setError} />}
-
       {selected && (
         <TicketDrawer
           ticket={selected}
           replies={repliesByTicket.get(selected.id) || []}
           role={user.role}
           features={features}
-          now={now}
-          timerBusy={busyTimers.includes(selected.id)}
           onClose={() => setSelectedId(null)}
           onReplied={onReplied}
-          onToggleTimer={() => toggleTimer(selected)}
-          onAdjustTimer={(minutes) => adjustTimer(selected, minutes)}
           onSaveNotes={(notes) => void saveTicket(selected, { internalNotes: notes }, 'notes')}
         />
       )}

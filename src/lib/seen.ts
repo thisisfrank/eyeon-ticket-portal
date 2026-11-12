@@ -4,8 +4,8 @@ import type { Reply, SessionUser } from '../types';
 // (ticket id -> newest reply time seen). Used for the "New reply" badges.
 export type SeenMap = Record<string, number>;
 
-export function seenKeyFor(user: Pick<SessionUser, 'role' | 'email'>, demo = false): string {
-  return `portal-seen:${demo ? 'demo:' : ''}${user.role}:${user.email || 'team'}`;
+export function seenKeyFor(user: Pick<SessionUser, 'role' | 'email'>): string {
+  return `portal-seen:${user.role}:${user.email || 'team'}`;
 }
 
 export function readSeen(key: string): SeenMap | null {
@@ -22,14 +22,6 @@ export function writeSeen(key: string, seen: SeenMap) {
     localStorage.setItem(key, JSON.stringify(seen));
   } catch {
     // Storage blocked: badges just won't persist across visits.
-  }
-}
-
-export function clearSeen(key: string) {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // ignore
   }
 }
 
